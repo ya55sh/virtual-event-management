@@ -13,5 +13,10 @@ eventRouter.post(
   authMiddleware,
   eventController.registerEvent
 );
+eventRouter.post(
+  "/:id/register",
+  authMiddleware,
+  eventController.deregisterEvent
+);
 
 module.exports = eventRouter;

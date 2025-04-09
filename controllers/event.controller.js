@@ -25,14 +25,14 @@ exports.createEvent = async (req, res) => {
 
     eventDataStore.push(newEvent);
 
-    //update user organised event in the user data store
+    // update user organised event in the user data store
     let updateUserOrganisedEvent = userDataStore.filter(
       (user) => id == user.id
     )[0];
     updateUserOrganisedEvent.event_organised.push(newEvent.event_id);
 
     res.status(200).json({
-      message: "Event create successfully",
+      message: "Event created successfully",
       event: newEvent,
     });
   } catch (error) {
@@ -77,7 +77,7 @@ exports.updateEvent = async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    //loop over req.body and update the fields accordingly
+    // loop over req.body and update the fields accordingly
     for (let key in req.body) {
       const value = req.body[key];
       if (value !== undefined && value !== null && value !== "") {
@@ -168,7 +168,7 @@ exports.registerEvent = async (req, res) => {
 
     await sendMail({
       to: email,
-      subject: "You're registered for the event!",
+      subject: `You're registered for the event!`,
       text: `Hey ${name}, you've been registered for the event ${getEventById.description} successfully.`,
     });
 
@@ -177,6 +177,67 @@ exports.registerEvent = async (req, res) => {
     console.error(error);
     res.status(500).json({
       message: "Something went wrong while registering for the event",
+    });
+  }
+};
+
+exports.deregisterEvent = async (req, res) => {
+  try {
+    const event_id = req.params.id;
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "Invalid participant data" });
+    }
+    // Check if event exists
+    const getEventById = eventDataStore.find(
+      (event) => event.event_id == event_id
+    );
+    if (!getEventById) {
+      return res.status(404).json({ message: "Event does not exist" });
+    }
+
+    const checkParticipant = getEventById.participants.find(
+      (participant) => participant.id === id
+    );
+
+    if (!checkParticipant) {
+      return res
+        .status(400)
+        .json({ message: "User is not registered for this event" });
+    }
+
+    // Remove user from participants list
+    getEventById.participants = getEventById.participants.filter(
+      (participant) => participant.id !== id
+    );
+
+    // Check if user exists
+    const userDataById = userDataStore.find((user) => user.id == id);
+    if (!userDataById) {
+      return res.status(404).json({ message: "User does not exist" });
+    }
+
+    // Remove event from user's followed list
+    userDataById.event_followed = user.event_followed.filter(
+      (event) => event.event_id !== event_id
+    );
+
+    // Send the email to the user about deregisteration
+
+    await sendMail({
+      to: userDataById.email,
+      subject: `You've deregistered from the event `,
+      text: `Hey ${userDataById.name}, you've deregistered for the event ${getEventById.description} :(.`,
+    });
+
+    res
+      .status(200)
+      .json({ message: "User successfully deregistered from event" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Something went wrong while deregistering from the event",
     });
   }
 };
