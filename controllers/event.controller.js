@@ -1,6 +1,8 @@
 require("dotenv").config();
 
 const { userDataStore, eventDataStore } = require("../db/data.store");
+const sendMail = require("../utils/email.service");
+
 const { v4: uuidv4 } = require("uuid");
 
 exports.createEvent = async (req, res) => {
@@ -151,6 +153,7 @@ exports.registerEvent = async (req, res) => {
       return res.status(409).json({ message: "Already following this event" });
     }
 
+    console.log("getEventByID ", getEventById);
     // Check if user is already registered as a participant
     const checkParticipant = getEventById.participants.find(
       (participant) => participant.id == id
@@ -163,13 +166,17 @@ exports.registerEvent = async (req, res) => {
     getEventById.participants.push({ id, name, email });
     userDataById.event_followed.push({ event_id });
 
+    await sendMail({
+      to: email,
+      subject: "You're registered for the event!",
+      text: `Hey ${name}, you've been registered for the event ${getEventById.description} successfully.`,
+    });
+
     res.status(201).json({ message: "Event registered successfully" });
   } catch (error) {
     console.error(error);
-    res
-      .status(500)
-      .json({
-        message: "Something went wrong while registering for the event",
-      });
+    res.status(500).json({
+      message: "Something went wrong while registering for the event",
+    });
   }
 };
