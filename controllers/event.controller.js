@@ -20,6 +20,7 @@ exports.createEvent = async (req, res) => {
       organiser: user,
       organiser_email: email,
       status,
+      participants: [],
     };
 
     eventDataStore.push(newEvent);
@@ -67,8 +68,6 @@ exports.fetchAllEvents = async (req, res) => {
 
 exports.updateEvent = async (req, res) => {
   try {
-    console.log(req.params);
-    console.log(req.query);
     let event_id = req.params.id;
     let updateEventDetails = eventDataStore.filter(
       (event) => event_id == event.event_id
@@ -104,7 +103,6 @@ exports.deleteEvent = async (req, res) => {
     let getEventById = eventDataStore.find(
       (event) => event.event_id == event_id
     );
-    console.log(getEventById);
 
     if (!getEventById) {
       return res.status(404).json({ message: "Event does not exist" });
@@ -131,6 +129,9 @@ exports.registerEvent = async (req, res) => {
     const event_id = req.params.id;
     const { id, name, email } = req.body;
 
+    if (!id || !name || !email) {
+      return res.status(400).json({ message: "Invalid participant data" });
+    }
     // Check if event exists
     const getEventById = eventDataStore.find(
       (event) => event.event_id == event_id
@@ -153,7 +154,6 @@ exports.registerEvent = async (req, res) => {
       return res.status(409).json({ message: "Already following this event" });
     }
 
-    console.log("getEventByID ", getEventById);
     // Check if user is already registered as a participant
     const checkParticipant = getEventById.participants.find(
       (participant) => participant.id == id

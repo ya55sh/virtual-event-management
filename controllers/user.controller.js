@@ -4,15 +4,14 @@ const saltRounds = 10;
 const jwt = require("jsonwebtoken");
 const jwtSecretKey = process.env.JWT_SECRET;
 
-const { userDataStore, eventDataStore } = require("../db/data.store");
+const { userDataStore } = require("../db/data.store");
 const { v4: uuidv4 } = require("uuid");
 
 exports.signup = async (req, res) => {
   try {
     let { username, email, password } = req.body;
-    //check if user already exists
-    console.log(req.body);
 
+    //check if user already exists
     let user = userDataStore.filter((item) => item.email == email);
     if (user.length != 0)
       return res.status(200).json({ message: "User already exists" });
@@ -29,7 +28,6 @@ exports.signup = async (req, res) => {
     };
 
     userDataStore.push(newUser);
-    console.log(newUser);
 
     res.status(200).json({
       message: "User created successfully",
@@ -73,87 +71,3 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: "Something went wrong while loggin in" });
   }
 };
-
-// exports.events = async (req, res) => {
-//   try {
-//     let { description, location, date, time, status } = req.body;
-//     let { id, email, user } = req.user;
-
-//     let newEvent = {
-//       event_id: uuidv4(),
-//       description,
-//       location,
-//       date,
-//       time,
-//       organiser_id: id,
-//       organiser: user,
-//       organiser_email: email,
-//       status,
-//     };
-
-//     eventDataStore.push(newEvent);
-//     let updateUserOrganisedEvent = userDataStore.filter(
-//       (user) => id == user.id
-//     )[0];
-//     updateUserOrganisedEvent.event_organised.push(newEvent.event_id);
-
-//     res.status(200).json({
-//       message: "Event create successfully",
-//       event: newEvent,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res
-//       .status(500)
-//       .json({ message: "Something went wrong while creating the event" });
-//   }
-// };
-
-// exports.fetchAllEvents = async (req, res) => {
-//   try {
-//     let { id } = req.user;
-
-//     let userOrganisedEvents = eventDataStore.filter(
-//       (event) => id == event.organiser_id
-//     );
-
-//     res.status(200).json({ message: userOrganisedEvents });
-//   } catch (error) {
-//     console.log(error);
-//     res
-//       .status(500)
-//       .json({ message: "Something went wrong while getting event list" });
-//   }
-// };
-
-// exports.updateEvent = async (req, res) => {
-//   try {
-//     console.log(req.params);
-//     console.log(req.query);
-//     let event_id = req.params.id;
-//     let updateEventDetails = eventDataStore.filter(
-//       (event) => event_id == event.event_id
-//     )[0];
-
-//     if (!updateEventDetails) {
-//       return res.status(404).json({ message: "Event not found" });
-//     }
-
-//     //loop over req.body and update the fields accordingly
-//     for (let key in req.body) {
-//       const value = req.body[key];
-//       if (value !== undefined && value !== null && value !== "") {
-//         updateEventDetails[key] = value;
-//       }
-//     }
-//     res.status(200).json({
-//       message: "Event updated successfully",
-//       event: updateEventDetails,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     res
-//       .status(500)
-//       .json({ message: "Something went wrong while updating event" });
-//   }
-// };
