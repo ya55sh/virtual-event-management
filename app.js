@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
-const route = require("./routes/index.route");
+const route = require("./routes");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
