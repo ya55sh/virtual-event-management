@@ -2,6 +2,12 @@ require("dotenv").config();
 
 const { userDataStore, eventDataStore } = require("../db/data.store");
 const sendMail = require("../utils/email.service");
+const {
+  getEventById,
+  fetchAllUserOrganisedEvents,
+} = require("../utils/event.service");
+
+const { getUserById, checkUserExist } = require("../utils/user.service");
 
 const { v4: uuidv4 } = require("uuid");
 
@@ -26,9 +32,7 @@ exports.createEvent = async (req, res) => {
     eventDataStore.push(newEvent);
 
     // update user organised event in the user data store
-    let updateUserOrganisedEvent = userDataStore.filter(
-      (user) => id == user.id
-    )[0];
+    let updateUserOrganisedEvent = getUserById(id);
     updateUserOrganisedEvent.event_organised.push(newEvent.event_id);
 
     res.status(200).json({
@@ -47,9 +51,7 @@ exports.fetchAllEvents = async (req, res) => {
   try {
     let { id } = req.user;
 
-    let userOrganisedEvents = eventDataStore.filter(
-      (event) => id == event.organiser_id
-    );
+    let userOrganisedEvents = fetchAllUserOrganisedEvents(id);
 
     if (userOrganisedEvents.length == 0) {
       return res.status(400).json({
@@ -69,9 +71,7 @@ exports.fetchAllEvents = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   try {
     let event_id = req.params.id;
-    let updateEventDetails = eventDataStore.filter(
-      (event) => event_id == event.event_id
-    )[0];
+    let updateEventDetails = getEventById(event_id);
 
     if (!updateEventDetails) {
       return res.status(404).json({ message: "Event not found" });
@@ -100,9 +100,7 @@ exports.deleteEvent = async (req, res) => {
   try {
     let event_id = req.params.id;
 
-    let getEventById = eventDataStore.find(
-      (event) => event.event_id == event_id
-    );
+    let getEventById = getEventById(event_id);
 
     if (!getEventById) {
       return res.status(404).json({ message: "Event does not exist" });
@@ -133,15 +131,13 @@ exports.registerEvent = async (req, res) => {
       return res.status(400).json({ message: "Invalid participant data" });
     }
     // Check if event exists
-    const getEventById = eventDataStore.find(
-      (event) => event.event_id == event_id
-    );
+    const getEventById = getEventById(event_id);
     if (!getEventById) {
       return res.status(404).json({ message: "Event does not exist" });
     }
 
     // Check if user exists
-    const userDataById = userDataStore.find((user) => user.id == id);
+    const userDataById = getUserById(id);
     if (!userDataById) {
       return res.status(404).json({ message: "User does not exist" });
     }
@@ -190,9 +186,7 @@ exports.deregisterEvent = async (req, res) => {
       return res.status(400).json({ message: "Invalid participant data" });
     }
     // Check if event exists
-    const getEventById = eventDataStore.find(
-      (event) => event.event_id == event_id
-    );
+    const getEventById = getEventById(event_id);
     if (!getEventById) {
       return res.status(404).json({ message: "Event does not exist" });
     }
@@ -213,7 +207,7 @@ exports.deregisterEvent = async (req, res) => {
     );
 
     // Check if user exists
-    const userDataById = userDataStore.find((user) => user.id == id);
+    const userDataById = getUserById(id);
     if (!userDataById) {
       return res.status(404).json({ message: "User does not exist" });
     }

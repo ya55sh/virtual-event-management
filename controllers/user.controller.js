@@ -5,16 +5,22 @@ const jwt = require("jsonwebtoken");
 const jwtSecretKey = process.env.JWT_SECRET;
 
 const { userDataStore } = require("../db/data.store");
+const { checkUserExist } = require("../utils/user.service");
 const { v4: uuidv4 } = require("uuid");
 
 exports.signup = async (req, res) => {
   try {
     let { username, email, password } = req.body;
 
+    if (!username || !email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Missing username, email or password" });
+    }
+
     //check if user already exists
-    let user = userDataStore.filter((item) => item.email == email);
-    if (user.length != 0)
-      return res.status(200).json({ message: "User already exists" });
+    let user = checkUserExist(email);
+    if (user) return res.status(200).json({ message: "User already exists" });
 
     let hashPassword = await bcrypt.hash(password, saltRounds);
 
@@ -45,18 +51,16 @@ exports.login = async (req, res) => {
     let hashPassword;
 
     //check if user exists or not
-    let user = userDataStore.filter((user) => user.email == email);
+    let user = checkUserExist(email);
+    if (!user) return res.status(200).json({ message: "User does not exist" });
 
-    if (user.length == 0)
-      return res.status(200).json({ message: "User does not exist" });
-
-    hashPassword = user[0].password;
+    hashPassword = user.password;
 
     let checkPassword = await bcrypt.compare(password, hashPassword);
 
     if (checkPassword) {
       var token = jwt.sign(
-        { id: user[0].id, email: email, user: user[0].username },
+        { id: user.id, email: email, user: user.username },
         jwtSecretKey,
         {
           expiresIn: "2h",
